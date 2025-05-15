@@ -231,10 +231,10 @@ def get_gemini_recommend(user_category_answer: str):
     
 
     user_queries = [
+        "서울에 환경을 생각하는 특별한 숙소 없을까?",
         "서울에서 지속 가능한 식재료를 사용하는 음식점 추천해줘.",
         "서울에 친환경적인 카페가 있을까?",
         "서울에서 자연을 느낄 수 있는 지속가능한 관광지 좀 알려줘.",
-        "서울에 환경을 생각하는 특별한 숙소 없을까?"
     ]
 
     category_index = valid_categories.index(user_category_answer)
