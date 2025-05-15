@@ -26,7 +26,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           source: "ecopath.tar"
-          target: "/home/iubns/gdgc/ecopath.tar"
+          target: "/home/iubns/gdgc"
 
       - name: Load Docker image and deploy
         uses: appleboy/ssh-action@v0.1.6
@@ -35,10 +35,10 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
-            docker load -i /home/iubns/gdgc/ecopath.tar
+            docker load -i /home/iubns/gdgc/ecopath.tar/ecopath.tar
             docker stop ecopath-container || true
             docker rm stop ecopath-container || true
-            docker run -d --name stop ecopath-container -p 8000:8000 \
+            docker run -d --name ecopath-container -p 8000:8000 \
               -e GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} \
               -e GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }} \
               ecopath:latest
