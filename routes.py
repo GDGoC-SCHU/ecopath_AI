@@ -242,10 +242,10 @@ def get_gemini_recommend(user_category_answer: str):
     return {"responses": responses}
 
 @app.get("/get_gemini_recommend")
-def get_gemini_recommend_routes(user_category_answer: str, region: str):
+def get_gemini_recommend_routes(user_category_answer: str):
     if user_category_answer not in valid_categories:
         raise HTTPException(status_code=400, detail=f"'{user_category_answer}'은(는) 유효한 카테고리가 아닙니다. 유효한 카테고리는 {valid_categories}입니다.")
 
     
-    return get_gemini_recommend(user_category_answer, region)
+    return get_gemini_recommend(user_category_answer)
 

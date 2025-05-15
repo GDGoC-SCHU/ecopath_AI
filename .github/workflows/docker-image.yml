@@ -2,7 +2,7 @@ name: Docker Image CI
 
 on:
   push:
-    branches: ["HD", "main"]
+    branches: ["main"]
 
 jobs:
   build:
@@ -36,9 +36,9 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
             docker stop ecopath-container || true
+            docker rm ecopath-container || true
             docker rmi ecopath:latest || true
             docker load -i /home/iubns/gdgc/ecopath.tar
-            docker rm ecopath-container || true
             docker run -d --name ecopath-container -p 8000:8000 \
               -e GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} \
               -e GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }} \
