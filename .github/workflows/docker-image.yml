@@ -1,0 +1,41 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: ["HD", "main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Build Docker image
+        run: |
+          docker buildx create --use
+          docker buildx build --platform linux/arm64 -t ecopath:latest --load .
+
+      - name: Save Docker image as tar
+        run: docker save -o ecopath.tar ecopath:latest
+
+      - name: Copy Docker image to server
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          source: "ecopath.tar"
+          target: "/home/iubns/gdgc/ecopath.tar"
+
+      - name: Load Docker image and deploy
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            docker load -i /home/iubns/gdgc/ecopath.tar
+            docker stop ecopath-container || true
+            docker rm stop ecopath-container || true
+            docker run -d --name stop ecopath-container -p 8000:8000 ecopath:latest
