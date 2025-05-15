@@ -228,18 +228,15 @@ def get_gemini_recommend(user_category_answer: str):
         "서울에 환경을 생각하는 특별한 숙소 없을까?"
     ]
 
-    responses = []
     category_index = valid_categories.index(user_category_answer)
     user_query = user_queries[category_index]
     response = chat_session.send_message(user_query)
-    responses.append({"query": user_query, "response": response.text})
-
-    # 마지막 사용자 입력에 대한 응답 추가
-    final_response = chat_session.send_message(user_category_answer)
-    responses.append({"query": user_category_answer, "response": final_response.text})
 
     # 결과를 반환
-    return {"responses": responses}
+    return {"responses": {
+        "query": user_query,
+        "response": response.text
+    }}
 
 @app.get("/get_gemini_recommend")
 def get_gemini_recommend_routes(user_category_answer: str):
