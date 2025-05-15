@@ -241,11 +241,16 @@ def get_gemini_recommend(user_category_answer: str):
     ]
 
     response = model.generate_content(messages)
+    content = response.text
+    start_index = content.find('{')
+    end_index = content.rfind('}') + 1
+    json_text = content[start_index:end_index]
+    parsed = json.loads(json_text)
 
     # 결과를 반환
     return {"responses": {
         "query": user_query,
-        "response": response.text,
+        "response": parsed,
     }}
 
 @app.get("/get_gemini_recommend")
