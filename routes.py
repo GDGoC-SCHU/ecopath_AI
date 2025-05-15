@@ -207,17 +207,15 @@ def get_gemini_routes(region: str = Query(..., description="추천을 받을 지
 
 def get_gemini_recommend(user_category_answer: str):
     model = genai.GenerativeModel('gemini-2.0-flash')
-    genai.configure(api_key=os.getenv("AIzaSyApTStVB2LTy6plI8ulS09jcfnNGr0wNZ0"))
-
-    chat_session = model.start_chat(history=[])
 
     system_instruction = (
-        "너는 서울의 친환경 여행 전문가야. "
-        "사용자가 서울에서 특정 카테고리(숙박, 식당, 카페, 관광지)의 지속 가능한 장소를 문의하면, "
-        "해당 카테고리에 맞는 예시를 3곳 추천해줘. 각 장소에 대해 친환경 요소도 구체적으로 설명해야 해. "
-        "만약 조건에 맞는 장소를 찾을 수 없다면 죄송하지만, 현재 조건에 맞는 [카테고리명]을(를) 찾을 수 없습니다.라고 답해줘."
-        "결과는 JSON 형식으로 이름, 특징, 설명을 분리해서 반환해줘. "
-        """
+        """너는 서울의 친환경 여행 전문가야. 
+        사용자가 서울에서 특정 카테고리(숙박, 식당, 카페, 관광지)의 지속 가능한 장소를 문의하면, 
+        해당 카테고리에 맞는 예시를 3곳 추천해줘. 각 장소에 대해 친환경 요소도 구체적으로 설명해야 해. 
+        만약 조건에 맞는 장소를 찾을 수 없다면 죄송하지만, 현재 조건에 맞는 [카테고리명]을(를) 찾을 수 없습니다.라고 답해줘.
+       
+       출력은 반드시 다음 JSON 형식을 따라줘:
+
             {{
                 "name": "...",
                 "description": "...",
@@ -227,24 +225,27 @@ def get_gemini_recommend(user_category_answer: str):
         """
     )
 
-    model = genai.GenerativeModel("gemini-2.5-pro-exp-03-25", system_instruction=system_instruction)
-    
-
     user_queries = [
-        "서울에 환경을 생각하는 특별한 숙소 없을까?",
         "서울에서 지속 가능한 식재료를 사용하는 음식점 추천해줘.",
         "서울에 친환경적인 카페가 있을까?",
         "서울에서 자연을 느낄 수 있는 지속가능한 관광지 좀 알려줘.",
+        "서울에 환경을 생각하는 특별한 숙소 없을까?"
     ]
 
     category_index = valid_categories.index(user_category_answer)
     user_query = user_queries[category_index]
-    response = chat_session.send_message(user_query)
+
+    messages = [
+        {"role": "assistant", "parts": system_instruction},
+        {"role": "user", "parts": user_query}
+    ]
+
+    response = model.generate_content(messages)
 
     # 결과를 반환
     return {"responses": {
         "query": user_query,
-        "response": response.text
+        "response": response.text,
     }}
 
 @app.get("/get_gemini_recommend")
