@@ -149,3 +149,148 @@ def get_gemini_routes(region: str = Query(..., description="추천을 받을 지
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Gemini 응답 처리 중 오류 발생: {str(e)}")
+    
+@app.get("/gemini_routes")
+def get_gemini_routes(region: str = Query(..., description="추천을 받을 지역명")):
+    prompt = f"""
+너는 '{region}' 여행 코스를 기획하는 여행 전문가야.
+
+사용자가 '{region}' 여행을 계획하고 있어.
+
+다음 조건에 따라 총 3개의 여행 경로를 추천해줘:
+- 각 경로에는 '숙소', '관광지', '식당', '카페'를 각각 1개씩 포함해야 해
+- 단, 장소의 순서는 경로마다 반드시 다르게 섞어줘야 해
+- 예: 관광지 → 숙소 → 카페 → 식당 또는 카페 → 관광지 → 숙소 → 식당 등
+- 동선이 자연스럽고 여행 흐름이 좋은 방식으로 조합해줘
+- 각 장소는 실제 존재하는 '{region}' 내 장소여야 하고, 서로 중복되지 않아야 해
+
+그리고 각 경로마다 **대중교통을 이용한 간단한 이동 설명**도 함께 작성해줘.
+예: "A에서 B까지는 3호선 지하철, B에서 C까지는 버스 7011번, 도보 5분" 등으로 간단하게.
+
+출력은 반드시 다음 JSON 형식을 따라줘:
+
+{{
+  "recommended_routes": [
+    {{
+      "course": [
+        {{ "category": "숙소", "name": "..." }},
+        {{ "category": "관광지", "name": "..." }},
+        {{ "category": "식당", "name": "..." }},
+        {{ "category": "카페", "name": "..." }}
+      ],
+      "transportation_guide": "..."
+    }},
+    ...
+  ]
+}}
+"""
+
+    try:
+        response = model.generate_content(prompt)
+        content = response.text
+
+        start_index = content.find('{')
+        end_index = content.rfind('}') + 1
+        json_text = content[start_index:end_index]
+        parsed = json.loads(json_text)
+        return parsed
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gemini 응답 처리 중 오류 발생: {str(e)}")
+    
+
+def get_gemini_recommend(user_category_answer: str):
+    model = genai.GenerativeModel('gemini-2.0-flash')
+    genai.configure(api_key=os.getenv("AIzaSyApTStVB2LTy6plI8ulS09jcfnNGr0wNZ0"))
+
+    chat_session = model.start_chat(history=[])
+
+    system_instruction = (
+        "너는 서울의 친환경 여행 전문가야. "
+        "사용자가 서울에서 특정 카테고리(숙박, 식당, 카페, 관광지)의 지속 가능한 장소를 문의하면, "
+        "해당 카테고리에 맞는 예시를 3곳 추천해줘. 각 장소에 대해 친환경 요소도 구체적으로 설명해야 해. "
+        "만약 조건에 맞는 장소를 찾을 수 없다면 죄송하지만, 현재 조건에 맞는 [카테고리명]을(를) 찾을 수 없습니다.라고 답해줘."
+    )
+
+    model = genai.GenerativeModel("gemini-2.5-pro-exp-03-25", system_instruction=system_instruction)
+
+    user_queries = [
+        "서울에서 지속 가능한 식재료를 사용하는 음식점 추천해줘.",
+        "서울에 친환경적인 카페가 있을까?",
+        "서울에서 자연을 느낄 수 있는 지속가능한 관광지 좀 알려줘.",
+        "서울에 환경을 생각하는 특별한 숙소 없을까?"
+    ]
+
+    responses = []
+    for user_query in user_queries:
+        response = chat_session.send_message(user_query)
+        responses.append({"query": user_query, "response": response.text})
+
+    # 마지막 사용자 입력에 대한 응답 추가
+    final_response = chat_session.send_message(user_category_answer)
+    responses.append({"query": user_category_answer, "response": final_response.text})
+
+    # 결과를 반환
+    return {"responses": responses}
+
+def get_gemini_recommend_stream(user_category_answer: str) -> Generator[str, None, None]:
+    model = genai.GenerativeModel('gemini-2.0-flash')
+    genai.configure(api_key=os.getenv("AIzaSyApTStVB2LTy6plI8ulS09jcfnNGr0wNZ0"))
+
+    chat_session = model.start_chat(history=[])
+
+    system_instruction = (
+        "너는 서울의 친환경 여행 전문가야. "
+        "사용자가 서울에서 특정 카테고리(숙박, 식당, 카페, 관광지)의 지속 가능한 장소를 문의하면, "
+        "해당 카테고리에 맞는 예시를 3곳 추천해줘. 각 장소에 대해 친환경 요소도 구체적으로 설명해야 해. "
+        "만약 조건에 맞는 장소를 찾을 수 없다면 죄송하지만, 현재 조건에 맞는 [카테고리명]을(를) 찾을 수 없습니다.라고 답해줘."
+    )
+
+    model = genai.GenerativeModel("gemini-2.5-pro-exp-03-25", system_instruction=system_instruction)
+
+    user_queries = [
+        "서울에서 지속 가능한 식재료를 사용하는 음식점 추천해줘.",
+        "서울에 친환경적인 카페가 있을까?",
+        "서울에서 자연을 느낄 수 있는 지속가능한 관광지 좀 알려줘.",
+        "서울에 환경을 생각하는 특별한 숙소 없을까?"
+    ]
+
+    # 각 질문에 대해 응답을 스트리밍
+    for user_query in user_queries:
+        response = chat_session.send_message(user_query)
+        yield f"data: {json.dumps({'query': user_query, 'response': response.text})}\n\n"
+
+    # 마지막 사용자 입력에 대한 응답 추가
+    final_response = chat_session.send_message(user_category_answer)
+    yield f"data: {json.dumps({'query': user_category_answer, 'response': final_response.text})}\n\n"
+
+
+
+
+@app.get("/get_gemini_recommend")
+def get_gemini_recommend_routes(user_category_answer: str):
+     # 유효한 카테고리 목록 정의
+    valid_categories = ["숙박", "식당", "카페", "관광지"]
+
+    # user_category_answer가 유효한 카테고리인지 확인
+    if user_category_answer not in valid_categories:
+        raise HTTPException(status_code=400, detail=f"'{user_category_answer}'은(는) 유효한 카테고리가 아닙니다. 유효한 카테고리는 {valid_categories}입니다.")
+
+    
+    return get_gemini_recommend(user_category_answer)
+
+
+@app.get("/get_gemini_recommend_stream")
+def get_gemini_recommend_routes(user_category_answer: str):
+     # 유효한 카테고리 목록 정의
+    valid_categories = ["숙박", "식당", "카페", "관광지"]
+
+    # user_category_answer가 유효한 카테고리인지 확인
+    if user_category_answer not in valid_categories:
+        raise HTTPException(status_code=400, detail=f"'{user_category_answer}'은(는) 유효한 카테고리가 아닙니다. 유효한 카테고리는 {valid_categories}입니다.")
+
+    return StreamingResponse(
+        get_gemini_recommend_stream(user_category_answer),
+        media_type="text/event-stream"
+    )
+

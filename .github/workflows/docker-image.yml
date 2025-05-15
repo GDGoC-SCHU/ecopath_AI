@@ -38,4 +38,8 @@ jobs:
             docker load -i /home/iubns/gdgc/ecopath.tar
             docker stop ecopath-container || true
             docker rm stop ecopath-container || true
-            docker run -d --name stop ecopath-container -p 8000:8000 ecopath:latest
+            docker run -d --name stop ecopath-container -p 8000:8000 \
+              -e GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} \
+              -e GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }} \
+              ecopath:latest
+            docker exec ecopath-container sh -c "uvicorn routes:app --host 0.0.0.0 --port 8000 --reload &"
