@@ -216,6 +216,15 @@ def get_gemini_recommend(user_category_answer: str):
         "사용자가 서울에서 특정 카테고리(숙박, 식당, 카페, 관광지)의 지속 가능한 장소를 문의하면, "
         "해당 카테고리에 맞는 예시를 3곳 추천해줘. 각 장소에 대해 친환경 요소도 구체적으로 설명해야 해. "
         "만약 조건에 맞는 장소를 찾을 수 없다면 죄송하지만, 현재 조건에 맞는 [카테고리명]을(를) 찾을 수 없습니다.라고 답해줘."
+        "결과는 JSON 형식으로 이름, 특징, 설명을 분리해서 반환해줘. "
+        """
+            {{
+                "name": "...",
+                "description": "...",
+                "features": "...",
+                ...
+            }} 
+        """
     )
 
     model = genai.GenerativeModel("gemini-2.5-pro-exp-03-25", system_instruction=system_instruction)
