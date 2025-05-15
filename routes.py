@@ -201,7 +201,7 @@ def get_gemini_routes(region: str = Query(..., description="추천을 받을 지
         raise HTTPException(status_code=500, detail=f"Gemini 응답 처리 중 오류 발생: {str(e)}")
     
 
-def get_gemini_recommend(user_category_answer: str):
+def get_gemini_recommend(user_category_answer: str, region: str):
     model = genai.GenerativeModel('gemini-2.0-flash')
     genai.configure(api_key=os.getenv("AIzaSyApTStVB2LTy6plI8ulS09jcfnNGr0wNZ0"))
 
@@ -235,7 +235,7 @@ def get_gemini_recommend(user_category_answer: str):
     # 결과를 반환
     return {"responses": responses}
 
-def get_gemini_recommend_stream(user_category_answer: str) -> Generator[str, None, None]:
+def get_gemini_recommend_stream(user_category_answer: str, region) -> Generator[str, None, None]:
     model = genai.GenerativeModel('gemini-2.0-flash')
     genai.configure(api_key=os.getenv("AIzaSyApTStVB2LTy6plI8ulS09jcfnNGr0wNZ0"))
 
@@ -270,7 +270,7 @@ def get_gemini_recommend_stream(user_category_answer: str) -> Generator[str, Non
 
 
 @app.get("/get_gemini_recommend")
-def get_gemini_recommend_routes(user_category_answer: str):
+def get_gemini_recommend_routes(user_category_answer: str, region: str):
      # 유효한 카테고리 목록 정의
     valid_categories = ["숙박", "식당", "카페", "관광지"]
 
@@ -279,11 +279,11 @@ def get_gemini_recommend_routes(user_category_answer: str):
         raise HTTPException(status_code=400, detail=f"'{user_category_answer}'은(는) 유효한 카테고리가 아닙니다. 유효한 카테고리는 {valid_categories}입니다.")
 
     
-    return get_gemini_recommend(user_category_answer)
+    return get_gemini_recommend(user_category_answer, region)
 
 
 @app.get("/get_gemini_recommend_stream")
-def get_gemini_recommend_routes(user_category_answer: str):
+def get_gemini_recommend_routes(user_category_answer: str, region: str):
      # 유효한 카테고리 목록 정의
     valid_categories = ["숙박", "식당", "카페", "관광지"]
 
@@ -292,7 +292,7 @@ def get_gemini_recommend_routes(user_category_answer: str):
         raise HTTPException(status_code=400, detail=f"'{user_category_answer}'은(는) 유효한 카테고리가 아닙니다. 유효한 카테고리는 {valid_categories}입니다.")
 
     return StreamingResponse(
-        get_gemini_recommend_stream(user_category_answer),
+        get_gemini_recommend_stream(user_category_answer, region),
         media_type="text/event-stream"
     )
 
