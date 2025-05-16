@@ -222,6 +222,8 @@ def get_gemini_recommend(user_category_answer: str):
                 "features": "...",
                 ...
             }} 
+
+        features는 배열이 아닌 문자열로 작성해줘.
         """
     )
 
